@@ -1,0 +1,103 @@
+﻿@page "/licenses"
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+
+@inject ILicenseUseCase LicenseUseCase
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Licenses</PageTitle>
+
+<h1>Licenses</h1>
+
+
+@if (licenses == null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<AuthorizeView Policy="AppUser">
+		<FluentDataGrid Items="@licenses.AsQueryable()">
+			<TemplateColumn Title="Actions" Context="userContext">
+				<FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(() => Delete(userContext))" />
+			</TemplateColumn>
+			<PropertyColumn Property="@(p => p.Id)" Sortable="true" />
+			<PropertyColumn Property="@(p => p.ClientEmail)" Sortable="true" />
+			<PropertyColumn Property="@(p => p.CreatedDate)" Format="dd/MM/yyyy" Sortable="true" />
+		</FluentDataGrid>
+	</AuthorizeView>
+	<AuthorizeView Policy="AppAdmin">
+		<FluentDataGrid Items="@licenses.AsQueryable()">
+			<TemplateColumn Title="Actions" Context="adminContext">
+				<FluentButton aria-label="Edit item" IconEnd="@(new Icons.Regular.Size16.Edit())" OnClick="@(() => Edit(adminContext))" />
+				<FluentButton aria-label="Delete item" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(() => Delete(adminContext))" />
+			</TemplateColumn>
+			<PropertyColumn Property="@(p => p.Id)" Sortable="true" />
+			<PropertyColumn Property="@(p => p.ClientEmail)" Sortable="true" />
+			<PropertyColumn Property="@(p => p.CreatedDate)" Format="dd/MM/yyyy" Sortable="true" />
+		</FluentDataGrid>
+	</AuthorizeView>
+}
+
+<FluentDialogProvider />
+
+@code {
+	List<License>? licenses;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+		// admin
+		if (authState?.User?.HasClaim("App", "AppAdmin") ?? false)
+			licenses = (await LicenseUseCase.ViewLicencesByNameAsync()).ToList();
+		// user
+		else if (authState?.User?.Identity?.Name is string clientEmail)
+			licenses = (await LicenseUseCase.ViewLicencesByNameAsync(clientEmail)).ToList();
+	}
+
+	async void Edit(License p)
+	{
+		var dialog = await DialogService.ShowDialogAsync<Dialogs.DialogEditLicense>(p, new DialogParameters()
+			{
+				Height = "240px",
+				Title = $"Edit license",
+				PreventDismissOnOverlayClick = false,
+				PreventScroll = true,
+			});
+
+		var result = await dialog.Result;
+
+		if (!result.Cancelled)
+		{
+			await LicenseUseCase.EdidtAsync(p);
+
+			StateHasChanged();
+		}
+	}
+
+	async void Delete(License p)
+	{
+		var dialog = await DialogService.ShowDialogAsync<Dialogs.DialogYesNo>(p, new DialogParameters()
+			{
+				Height = "240px",
+				Title = $"Delete license",
+				PreventDismissOnOverlayClick = false,
+				PreventScroll = true,
+			});
+
+		var result = await dialog.Result;
+
+		if (!result.Cancelled)
+		{
+			await LicenseUseCase.DeleteAsync(p.Id);
+
+			licenses?.Remove(p);
+
+			StateHasChanged();
+		}
+	}
+}

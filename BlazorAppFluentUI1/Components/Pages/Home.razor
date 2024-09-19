@@ -1,0 +1,16 @@
+﻿@page "/"
+@attribute [Authorize]
+
+<PageTitle>Home</PageTitle>
+
+<h1>Apps</h1>
+
+<FluentGrid Spacing="3" AdaptiveRendering="true" Justify="JustifyContent.FlexStart">
+	<FluentGridItem xs="6" sm="3">
+		<FluentCard Height="100px">
+			<FluentNavLink Href="licenses">
+				<p>Licenses</p>
+			</FluentNavLink>
+		</FluentCard>
+	</FluentGridItem>
+</FluentGrid>

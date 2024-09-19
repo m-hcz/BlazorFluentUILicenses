@@ -1,0 +1,42 @@
+﻿@rendermode InteractiveServer
+
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+	<Authorized>
+		<FluentNavLink Href="Account/Manage">@context.User.Identity?.Name</FluentNavLink>
+		<FluentSpacer Width="50" />
+		<form action="Account/Logout" method="post">
+			<AntiforgeryToken />
+			<input type="hidden" name="ReturnUrl" value="@currentUrl" />
+			<FluentButton Type="ButtonType.Submit" Style="width: 100%;">Logout</FluentButton>
+		</form>
+	</Authorized>
+	<NotAuthorized>
+		@* <FluentNavLink Href="Account/Register">Register</FluentNavLink> *@
+		<FluentNavLink Href="Account/Login">Login</FluentNavLink>
+	</NotAuthorized>
+</AuthorizeView>
+
+@code {
+	private string? currentUrl;
+
+	protected override void OnInitialized()
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+		NavigationManager.LocationChanged += OnLocationChanged;
+	}
+
+	private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= OnLocationChanged;
+	}
+}

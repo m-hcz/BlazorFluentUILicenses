@@ -1,0 +1,51 @@
+﻿@implements IDialogContentComponent<License>
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+	<FluentStack VerticalAlignment="VerticalAlignment.Center">
+		<FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+		<FluentLabel Typo="Typography.PaneHeader">
+			@Dialog.Instance.Parameters.Title
+		</FluentLabel>
+	</FluentStack>
+</FluentDialogHeader>
+
+@* Body *@
+<FluentDialogBody>
+	<FluentLabel>@Content.ClientEmail</FluentLabel>
+	<FluentDatePicker Label="Created Date" @bind-Value="@SelectedValue" />
+</FluentDialogBody>
+
+@* Footer *@
+<FluentDialogFooter>
+	<FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Yes</FluentButton>
+	<FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">No</FluentButton>
+</FluentDialogFooter>
+
+@code {
+	private DateTime? SelectedValue = DateTime.Today;
+
+	[Parameter]
+	public License Content { get; set; } = default!;
+
+	[CascadingParameter]
+	public FluentDialog Dialog { get; set; } = default!;
+
+	protected override void OnParametersSet()
+	{
+		SelectedValue = Content.CreatedDate;
+	}
+
+	private async Task SaveAsync()
+	{
+		if (SelectedValue is DateTime date)
+			Content.CreatedDate = date;
+
+		await Dialog.CloseAsync(Content);
+	}
+
+	private async Task CancelAsync()
+	{
+		await Dialog.CancelAsync();
+	}
+}
